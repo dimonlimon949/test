@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEON RUNNER — 2D платформер с улучшениями</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ЭКРАН ЗАГРУЗКИ -->
+<div id="loading-screen" class="screen active">
+  <div class="logo-wrap">
+    <div class="game-logo">NEON<span>RUNNER</span></div>
+    <div class="logo-sub">2D ACTION PLATFORMER</div>
+  </div>
+  <div class="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
+  <div id="loader-percent" class="loader-percent">0%</div>
+  <div id="loader-tip" class="loader-tip">Загрузка…</div>
+</div>
+
+<!-- ГЛАВНОЕ МЕНЮ -->
+<div id="menu-screen" class="screen">
+  <canvas id="menu-bg"></canvas>
+  <div class="menu-content">
+    <div class="game-logo big">NEON<span>RUNNER</span></div>
+    <div class="menu-buttons">
+      <button class="btn btn-primary" data-action="play" data-sound="click">▶ Играть</button>
+      <button class="btn" data-action="upgrades" data-sound="click">⚒ Улучшения</button>
+      <button class="btn" data-action="levels" data-sound="click">🗺 Выбор уровня</button>
+      <button class="btn" data-action="howto" data-sound="click">❓ Как играть</button>
+      <button class="btn" data-action="sound" data-sound="click">🔊 Звук: ВКЛ</button>
+    </div>
+    <div class="menu-footer">Управление: A/D или ←/→ — движение · W/↑/Пробел — прыжок · X/J — стрельба · P — пауза</div>
+  </div>
+</div>
+
+<!-- ОКНО УЛУЧШЕНИЙ -->
+<div id="upgrade-modal" class="modal">
+  <div class="modal-box">
+    <h2>⚒ Мастерская улучшений</h2>
+    <div class="coins-line">💰 Монеты: <span id="modal-coins">0</span></div>
+    <div id="upgrade-list" class="upgrade-list"></div>
+    <button class="btn btn-close" data-action="close-modal" data-sound="back">✖ Закрыть</button>
+  </div>
+</div>
+
+<!-- ОКНО ВЫБОРА УРОВНЯ -->
+<div id="levels-modal" class="modal">
+  <div class="modal-box">
+    <h2>🗺 Выбор уровня</h2>
+    <div id="levels-grid" class="levels-grid"></div>
+    <button class="btn btn-close" data-action="close-modal" data-sound="back">✖ Закрыть</button>
+  </div>
+</div>
+
+<!-- ОКНО "КАК ИГРАТЬ" -->
+<div id="howto-modal" class="modal">
+  <div class="modal-box">
+    <h2>❓ Как играть</h2>
+    <div class="howto">
+      <p>🏃 <b>A / D</b> или <b>←/→</b> — бег, <b>W / ↑ / Пробел</b> — прыжок (двойной доступен как улучшение).</p>
+      <p>🔫 <b>X / J</b> — стрельба энергосгустками. Собирай 💰 монеты и ⭐ опыт.</p>
+      <p>⚒ На вырученные монеты покупай <b>улучшения</b>: урон, скорость, двойной прыжок, регенерация, магнит, дробь…</p>
+      <p>❤️ Враги разные: ползущие жуки, летающие дроны, стрелки-турели и здоровенные боссы в конце каждого уровня!</p>
+      <p>🏁 Цель — добежать до портала и победить босса. Прогресс сохраняется автоматически.</p>
+    </div>
+    <button class="btn btn-close" data-action="close-modal" data-sound="back">✖ Закрыть</button>
+  </div>
+</div>
+
+<!-- ЭКРАН ИГРЫ -->
+<div id="game-screen" class="screen">
+  <canvas id="game-canvas"></canvas>
+  <div id="hud">
+    <div class="hud-left">
+      <div class="hp-bar"><div id="hp-fill"></div><span id="hp-text">100/100</span></div>
+      <div class="xp-bar"><div id="xp-fill"></div><span id="xp-text">LVL 1</span></div>
+    </div>
+    <div class="hud-right">
+      <span class="hud-item">💰 <b id="hud-coins">0</b></span>
+      <span class="hud-item">👾 <b id="hud-kills">0</b></span>
+      <span class="hud-item">🏆 <b id="hud-score">0</b></span>
+      <span class="hud-item lvl">Уровень <b id="hud-level">1</b></span>
+      <button id="btn-pause" class="hud-btn" data-sound="click">⏸</button>
+      <button id="btn-mute" class="hud-btn" data-sound="click">🔊</button>
+    </div>
+  </div>
+  <div id="boss-bar" class="hidden"><div id="boss-fill"></div><span id="boss-name">BOSS</span></div>
+  <div id="level-banner" class="hidden"></div>
+  <div id="toast"></div>
+</div>
+
+<!-- ПАУЗА -->
+<div id="pause-screen" class="overlay-screen">
+  <div class="panel">
+    <h2>⏸ Пауза</h2>
+    <button class="btn btn-primary" data-action="resume" data-sound="click">▶ Продолжить</button>
+    <button class="btn" data-action="open-upgrade-pause" data-sound="click">⚒ Улучшения</button>
+    <button class="btn" data-action="restart" data-sound="click">↺ Начать заново</button>
+    <button class="btn" data-action="quit" data-sound="back">🏠 В меню</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="death-screen" class="overlay-screen">
+  <div class="panel panel-red">
+    <h2>💀 Вы пали!</h2>
+    <div class="stats" id="death-stats"></div>
+    <button class="btn btn-primary" data-action="restart" data-sound="click">↺ Ещё раз</button>
+    <button class="btn" data-action="quit" data-sound="back">🏠 В меню</button>
+  </div>
+</div>
+
+<!-- ПОБЕДА НАД УРОВНЕМ -->
+<div id="win-screen" class="overlay-screen">
+  <div class="panel panel-green">
+    <h2>🏆 Уровень пройден!</h2>
+    <div class="stats" id="win-stats"></div>
+    <button class="btn btn-primary" id="btn-next" data-action="next-level" data-sound="click">➡ Следующий уровень</button>
+    <button class="btn" data-action="open-upgrade-pause" data-sound="click">⚒ Улучшения</button>
+    <button class="btn" data-action="quit" data-sound="back">🏠 В меню</button>
+  </div>
+</div>
+
+<!-- ФИНАЛ -->
+<div id="final-screen" class="overlay-screen">
+  <div class="panel panel-gold">
+    <h2>🌟 ПРОЙДЕНА ВСЯ ИГРА! 🌟</h2>
+    <div class="stats" id="final-stats"></div>
+    <button class="btn btn-primary" data-action="quit" data-sound="click">🏠 В меню</button>
+  </div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/upgrades.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/player.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
